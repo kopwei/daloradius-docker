@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-IMAGE_NAME="kopwei/daloradius"
+
 TAG="latest"
 PLATFORMS="linux/amd64,linux/arm64"
 
@@ -18,12 +18,20 @@ else
     docker buildx use daloradius-builder
 fi
 
-# Build and push
-echo "Building and pushing $IMAGE_NAME:$TAG for platforms: $PLATFORMS"
+# Build and push daloradius
+echo "Building and pushing kopwei/daloradius:$TAG..."
 docker buildx build \
     --platform "$PLATFORMS" \
-    --tag "$IMAGE_NAME:$TAG" \
+    --tag "kopwei/daloradius:$TAG" \
     --push \
     daloradius/
+
+# Build and push freeradius
+echo "Building and pushing kopwei/freeradius:$TAG..."
+docker buildx build \
+    --platform "$PLATFORMS" \
+    --tag "kopwei/freeradius:$TAG" \
+    --push \
+    freeradius/
 
 echo "Build and push completed successfully!"

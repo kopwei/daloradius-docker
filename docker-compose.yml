@@ -6,6 +6,7 @@ services:
       MYSQL_DATABASE: radius
       MYSQL_USER: radius
       MYSQL_PASSWORD: radius
+      TZ: ${TZ:-UTC}
     volumes:
       - db_data:/var/lib/mysql
       - ./initdb:/docker-entrypoint-initdb.d
@@ -25,6 +26,7 @@ services:
       RAD_DB_USER: radius
       RAD_DB_PASS: radius
       RAD_DB_NAME: radius
+      TZ: ${TZ:-UTC}
     depends_on:
       - db
     ports:
@@ -41,6 +43,7 @@ services:
       DB_USER: radius
       DB_PASS: radius
       DB_NAME: radius
+      TZ: ${TZ:-UTC}
     depends_on:
       - db
 

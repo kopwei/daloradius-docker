@@ -22,16 +22,18 @@ RUN docker-php-ext-install \
     xml \
     zip
 
-# Install fonts for JpGraph
+# Install fonts for JpGraph and Timezone support
 RUN apt-get update && apt-get install -y \
     fonts-liberation \
     fontconfig \
+    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Configure PHP for production (suppress deprecation warnings on UI)
+# Configure PHP for production and timezone
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" && \
     echo "error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT" >> /usr/local/etc/php/conf.d/error_reporting.ini && \
-    echo "display_errors = Off" >> /usr/local/etc/php/conf.d/error_reporting.ini
+    echo "display_errors = Off" >> /usr/local/etc/php/conf.d/error_reporting.ini && \
+    echo "date.timezone = \${TZ}" >> /usr/local/etc/php/conf.d/timezone.ini
 
 # Install PEAR packages
 RUN pear channel-update pear.php.net && \
@@ -83,8 +85,11 @@ RUN mkdir -p /usr/share/fonts/truetype/custom && \
 
 
 
-# Create a redirect index.php since the repository's index.php seems to be missing or we want to force redirect
+# Create index.php redirect
 RUN echo '<?php header("Location: app/operators/login.php"); exit; ?>' > /var/www/html/index.php
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html
 
 # Copy entrypoint
 COPY entrypoint.sh /usr/local/bin/

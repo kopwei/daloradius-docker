@@ -27,7 +27,12 @@ if [ ! -f "$CONFIG_FILE" ]; then
     sed -i "s/configValues\['CONFIG_DB_USER'\] = '.*';/configValues['CONFIG_DB_USER'] = '$DB_USER';/" "$CONFIG_FILE"
     sed -i "s/configValues\['CONFIG_DB_PASS'\] = '.*';/configValues['CONFIG_DB_PASS'] = '$DB_PASS';/" "$CONFIG_FILE"
     sed -i "s/configValues\['CONFIG_DB_NAME'\] = '.*';/configValues['CONFIG_DB_NAME'] = '$DB_NAME';/" "$CONFIG_FILE"
+    sed -i "s/configValues\['CONFIG_DB_PASS'\] = '.*';/configValues['CONFIG_DB_PASS'] = '$DB_PASS';/" "$CONFIG_FILE"
+    sed -i "s/configValues\['CONFIG_DB_NAME'\] = '.*';/configValues['CONFIG_DB_NAME'] = '$DB_NAME';/" "$CONFIG_FILE"
 fi
+
+# Ensure web server user owns the config file
+chown www-data:www-data "$CONFIG_FILE"
 
 # Check if we need to initialize the database
 # This is a basic check. In a production environment, you might want more robust migration handling.

@@ -1,0 +1,48 @@
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: radius
+      MYSQL_USER: radius
+      MYSQL_PASSWORD: radius
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d
+
+  freeradius:
+    build: ./freeradius
+    image: my-freeradius:latest
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_USER: radius
+      MYSQL_PASSWORD: radius
+      MYSQL_DATABASE: radius
+      # Map standard FreeRADIUS env vars if known, or use these in our config
+      RAD_DB_HOST: db
+      RAD_DB_PORT: 3306
+      RAD_DB_USER: radius
+      RAD_DB_PASS: radius
+      RAD_DB_NAME: radius
+    depends_on:
+      - db
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+
+  daloradius:
+    build: ./daloradius
+    image: daloradius:latest
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_USER: radius
+      DB_PASS: radius
+      DB_NAME: radius
+    depends_on:
+      - db
+
+volumes:
+  db_data:

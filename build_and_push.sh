@@ -19,18 +19,18 @@ else
 fi
 
 # Build and push daloradius
-echo "Building and pushing kopwei/daloradius:$TAG..."
+echo "Building and pushing kopkop/daloradius:$TAG..."
 docker buildx build \
     --platform "$PLATFORMS" \
-    --tag "kopwei/daloradius:$TAG" \
+    --tag "kopkop/daloradius:$TAG" \
     --push \
     daloradius/
 
 # Build and push freeradius
-echo "Building and pushing kopwei/freeradius:$TAG..."
+echo "Building and pushing kopkop/freeradius:$TAG..."
 docker buildx build \
     --platform "$PLATFORMS" \
-    --tag "kopwei/freeradius:$TAG" \
+    --tag "kopkop/freeradius:$TAG" \
     --push \
     freeradius/
 

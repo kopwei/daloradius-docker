@@ -13,7 +13,7 @@ services:
 
   freeradius:
     build: ./freeradius
-    image: kopwei/freeradius:latest
+    image: kopkop/freeradius:latest
     environment:
       MYSQL_HOST: db
       MYSQL_PORT: 3306
@@ -35,7 +35,7 @@ services:
 
   daloradius:
     build: ./daloradius
-    image: kopwei/daloradius:latest
+    image: kopkop/daloradius:latest
     ports:
       - "8080:80"
     environment:

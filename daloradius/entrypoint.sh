@@ -36,7 +36,7 @@ chown www-data:www-data "$CONFIG_FILE"
 
 # Check if we need to initialize the database
 echo "Waiting for database '$DB_NAME' at $DB_HOST:$DB_PORT..."
-MAX_RETRIES=30
+MAX_RETRIES=60
 COUNT=0
 until mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl -e "select 1" > /dev/null 2>&1; do
   COUNT=$((COUNT+1))

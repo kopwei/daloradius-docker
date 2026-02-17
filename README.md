@@ -81,7 +81,7 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
           test: ["CMD", "test", "-f", "/tmp/db_initialized"]
           interval: 5s
           timeout: 5s
-          retries: 20
+          retries: 40
 
       freeradius:
         image: kopkop/freeradius:latest

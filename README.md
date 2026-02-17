@@ -61,11 +61,10 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
         image: kopkop/freeradius:latest
         environment:
           MYSQL_HOST: db
-          RAD_DB_HOST: db
-          RAD_DB_PORT: 3306
-          RAD_DB_USER: radius
-          RAD_DB_PASS: radius
-          RAD_DB_NAME: radius
+          MYSQL_PORT: 3306
+          MYSQL_USER: radius
+          MYSQL_PASSWORD: radius
+          MYSQL_DATABASE: radius
           TZ: ${TZ:-UTC}
         depends_on:
           - db

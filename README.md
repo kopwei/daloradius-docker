@@ -55,7 +55,7 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
           MYSQL_PASSWORD: radius
           TZ: ${TZ:-UTC}
         volumes:
-          - db_data:/var/lib/mysql
+          - ./mysql-data:/var/lib/mysql
 
       freeradius:
         image: kopkop/freeradius:latest
@@ -85,16 +85,13 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
           TZ: ${TZ:-UTC}
         depends_on:
           - db
-
-    volumes:
-      db_data:
     ```
 
 3.  **Run the stack**:
     ```bash
     docker compose up -d
     ```
-    *Note: The `daloradius` container will automatically populate the database schema on the first run. `freeradius` might restart a few times until the database is ready.*
+    *Note: The `daloradius` container will automatically populate the database schema on the first run. The database files will be stored in the `./mysql-data` folder in your current directory.*
 
 ## Directory Structure
 - `daloradius/`: Source for daloRADIUS Docker image (Based on `php:8.2-apache`).

@@ -56,6 +56,11 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
           TZ: ${TZ:-UTC}
         volumes:
           - ./mysql-data:/var/lib/mysql
+        healthcheck:
+          test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
 
       freeradius:
         image: kopkop/freeradius:latest
@@ -67,7 +72,8 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
           MYSQL_DATABASE: radius
           TZ: ${TZ:-UTC}
         depends_on:
-          - db
+          db:
+            condition: service_healthy
         ports:
           - "1812:1812/udp"
           - "1813:1813/udp"
@@ -83,7 +89,8 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
           DB_NAME: radius
           TZ: ${TZ:-UTC}
         depends_on:
-          - db
+          db:
+            condition: service_healthy
     ```
 
 3.  **Run the stack**:

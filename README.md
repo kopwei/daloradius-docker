@@ -48,6 +48,7 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
     services:
       db:
         image: mariadb:10.11
+        restart: unless-stopped
         environment:
           MYSQL_ROOT_PASSWORD: rootpassword
           MYSQL_DATABASE: radius
@@ -58,28 +59,13 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
           - ./mysql-data:/var/lib/mysql
         healthcheck:
           test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
-          interval: 10s
+          interval: 5s
           timeout: 5s
-          retries: 5
-
-      freeradius:
-        image: kopkop/freeradius:latest
-        environment:
-          MYSQL_HOST: db
-          MYSQL_PORT: 3306
-          MYSQL_USER: radius
-          MYSQL_PASSWORD: radius
-          MYSQL_DATABASE: radius
-          TZ: ${TZ:-UTC}
-        depends_on:
-          db:
-            condition: service_healthy
-        ports:
-          - "1812:1812/udp"
-          - "1813:1813/udp"
+          retries: 10
 
       daloradius:
         image: kopkop/daloradius:latest
+        restart: unless-stopped
         ports:
           - "8080:80"
         environment:
@@ -91,13 +77,37 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
         depends_on:
           db:
             condition: service_healthy
+        healthcheck:
+          test: ["CMD", "test", "-f", "/tmp/db_initialized"]
+          interval: 5s
+          timeout: 5s
+          retries: 20
+
+      freeradius:
+        image: kopkop/freeradius:latest
+        restart: unless-stopped
+        environment:
+          MYSQL_HOST: db
+          MYSQL_PORT: 3306
+          MYSQL_USER: radius
+          MYSQL_PASSWORD: radius
+          MYSQL_DATABASE: radius
+          TZ: ${TZ:-UTC}
+        depends_on:
+          db:
+            condition: service_healthy
+          daloradius:
+            condition: service_healthy
+        ports:
+          - "1812:1812/udp"
+          - "1813:1813/udp"
     ```
 
 3.  **Run the stack**:
     ```bash
     docker compose up -d
     ```
-    *Note: The `daloradius` container will automatically populate the database schema on the first run. The database files will be stored in the `./mysql-data` folder in your current directory.*
+    *Note: The `freeradius` service correctly waits for `daloradius` to finish the database initialization before it starts.*
 
 ## Directory Structure
 - `daloradius/`: Source for daloRADIUS Docker image (Based on `php:8.2-apache`).

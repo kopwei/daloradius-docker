@@ -35,28 +35,52 @@ fi
 chown www-data:www-data "$CONFIG_FILE"
 
 # Check if we need to initialize the database
-# This is a basic check. In a production environment, you might want more robust migration handling.
-echo "Waiting for database..."
-until mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" --skip-ssl -e "select 1" > /dev/null 2>&1; do
-  echo "Database not ready, waiting..."
+echo "Waiting for database '$DB_NAME' at $DB_HOST:$DB_PORT..."
+MAX_RETRIES=30
+COUNT=0
+until mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl -e "select 1" > /dev/null 2>&1; do
+  COUNT=$((COUNT+1))
+  if [ $COUNT -ge $MAX_RETRIES ]; then
+    echo "Error: Database '$DB_NAME' not ready after $MAX_RETRIES retries. Exiting."
+    # Try one last time without the DB name to see if the server is at least up
+    if mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" --skip-ssl -e "select 1" > /dev/null 2>&1; then
+        echo "Note: Database server is UP, but database '$DB_NAME' does not exist yet."
+    fi
+    exit 1
+  fi
+  echo "Database '$DB_NAME' not ready (attempt $COUNT/$MAX_RETRIES), waiting..."
   sleep 2
 done
 
-# Check if tables exist. If not, print a message (initialization should be handled by MariaDB initdb)
-TABLE_COUNT=$(mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl -e "SHOW TABLES LIKE 'operators_acl';" | grep -c "operators_acl")
-
-if [ "$TABLE_COUNT" -eq 0 ]; then
-    echo "Warning: daloRADIUS tables not found."
-    # Optional: Try to import if available in common locations
-    if [ -f "/var/www/html/contrib/db/fr2-mysql-daloradius-and-freeradius.sql" ]; then
-         echo "Attempting import from /var/www/html/contrib/db/fr2-mysql-daloradius-and-freeradius.sql"
-         mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl < /var/www/html/contrib/db/fr2-mysql-daloradius-and-freeradius.sql
-    elif [ -f "/var/www/html/contrib/db/mysql-daloradius.sql" ]; then
-         echo "Attempting import from /var/www/html/contrib/db/mysql-daloradius.sql"
-         mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl < /var/www/html/contrib/db/mysql-daloradius.sql
-    fi
+echo "Database '$DB_NAME' is ready. checking for daloRADIUS tables..."
+if mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl -e "DESCRIBE operators_acl" > /dev/null 2>&1; then
+    echo "Found 'operators_acl' table. Skipping initialization."
+    TABLE_EXISTS=1
 else
-    echo "Database appears to be initialized."
+    echo "Table 'operators_acl' not found. Starting initialization..."
+    TABLE_EXISTS=0
 fi
 
+if [ "$TABLE_EXISTS" -eq 0 ]; then
+    # Import FreeRADIUS schema first
+    if [ -f "/var/www/html/contrib/db/fr3-mariadb-freeradius.sql" ]; then
+         echo "Importing FreeRADIUS schema from /var/www/html/contrib/db/fr3-mariadb-freeradius.sql..."
+         mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl < /var/www/html/contrib/db/fr3-mariadb-freeradius.sql
+    fi
+
+    # Import daloRADIUS schema
+    if [ -f "/var/www/html/contrib/db/mariadb-daloradius.sql" ]; then
+         echo "Importing daloRADIUS schema from /var/www/html/contrib/db/mariadb-daloradius.sql..."
+         mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl < /var/www/html/contrib/db/mariadb-daloradius.sql
+    elif [ -f "/var/www/html/contrib/db/mysql-daloradius.sql" ]; then
+         echo "Importing daloRADIUS schema from /var/www/html/contrib/db/mysql-daloradius.sql..."
+         mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" --skip-ssl < /var/www/html/contrib/db/mysql-daloradius.sql
+    fi
+    echo "Database initialization completed."
+fi
+
+# Create a flag file to signal that the database is ready for other containers
+touch /tmp/db_initialized
+
+echo "Starting daloRADIUS..."
 exec "$@"

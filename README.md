@@ -35,9 +35,66 @@ This project provides a Dockerized daloRADIUS environment with MariaDB and FreeR
     - Data is persisted in `db_data` volume.
     - SQL schemas are loaded from `./initdb` on first run.
 
-- **Ports**:
-    - FreeRADIUS: 1812/udp, 1813/udp
-    - daloRADIUS: 8080 (Mapped to 80 inside container)
+- daloRADIUS: 8080 (Mapped to 80 inside container)
+
+## Running on Another Machine (e.g., Raspberry Pi)
+
+To run this stack on another device (ARM64 or AMD64) **without cloning the repository**:
+
+1.  **Create a folder** (e.g., `radius-server`) and enter it.
+2.  **Create a `docker-compose.yml` file** with the following content:
+
+    ```yaml
+    services:
+      db:
+        image: mariadb:10.11
+        environment:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: radius
+          MYSQL_USER: radius
+          MYSQL_PASSWORD: radius
+          TZ: ${TZ:-UTC}
+        volumes:
+          - db_data:/var/lib/mysql
+
+      freeradius:
+        image: kopkop/freeradius:latest
+        environment:
+          MYSQL_HOST: db
+          RAD_DB_HOST: db
+          RAD_DB_PORT: 3306
+          RAD_DB_USER: radius
+          RAD_DB_PASS: radius
+          RAD_DB_NAME: radius
+          TZ: ${TZ:-UTC}
+        depends_on:
+          - db
+        ports:
+          - "1812:1812/udp"
+          - "1813:1813/udp"
+
+      daloradius:
+        image: kopkop/daloradius:latest
+        ports:
+          - "8080:80"
+        environment:
+          DB_HOST: db
+          DB_USER: radius
+          DB_PASS: radius
+          DB_NAME: radius
+          TZ: ${TZ:-UTC}
+        depends_on:
+          - db
+
+    volumes:
+      db_data:
+    ```
+
+3.  **Run the stack**:
+    ```bash
+    docker compose up -d
+    ```
+    *Note: The `daloradius` container will automatically populate the database schema on the first run. `freeradius` might restart a few times until the database is ready.*
 
 ## Directory Structure
 - `daloradius/`: Source for daloRADIUS Docker image (Based on `php:8.2-apache`).

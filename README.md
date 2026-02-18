@@ -109,6 +109,25 @@ To run this stack on another device (ARM64 or AMD64) **without cloning the repos
     ```
     *Note: The `freeradius` service correctly waits for `daloradius` to finish the database initialization before it starts.*
 
+## Management Tasks
+
+### Adding a RADIUS Client (NAS / Switch / AP)
+This setup enables SQL-based client management. You can add your hardware devices via the daloRADIUS Web UI:
+
+1.  Log in to daloRADIUS (`http://localhost:8080`).
+2.  Go to **Management** -> **NAS** -> **New NAS**.
+3.  Fill in the details:
+    - **NAS IP/Host**: The IP address of your switch or router.
+    - **NAS Secret**: The shared secret (password) for your hardware.
+    - **NAS Shortname**: A descriptive name (e.g., `Cisco-Core`).
+    - **NAS Type**: Usually `other` or specific brand if listed.
+4.  Click **Apply**.
+5.  **Restart FreeRADIUS** to load the new client (FreeRADIUS in this setup reads clients on startup):
+    ```bash
+    docker compose restart freeradius
+    ```
+    *Note: If you add many clients, consider setting up `dynamic_clients` or using a reload command.*
+
 ## Directory Structure
 - `daloradius/`: Source for daloRADIUS Docker image (Based on `php:8.2-apache`).
 - `freeradius/`: Source for FreeRADIUS custom image (Based on `ubuntu:22.04` for multi-arch support).
